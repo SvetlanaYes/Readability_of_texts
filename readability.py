@@ -1,23 +1,40 @@
 import re
+import sys
+import nltk
+from nltk.corpus import stopwords
+from pymystem3 import Mystem
+from string import punctuation
+#natasha , text without punctuation
+
+mystem = Mystem()
+russian_stopwords = stopwords.words("russian")
 
 
-def syllable_count(word_in_sentence):
-    count = 0
-    syllables = set("ауоыиэяюёе")
+def preprocess_text(text):
+    tokens = mystem.lemmatize(text.lower())
+    tokens = [token for token in tokens if token not in russian_stopwords \
+              and token != " " \
+              and token.strip() not in punctuation]
+
+    text = " ".join(tokens)
+
+    return text
+
+def syllable_count(text):
     pattern = r"[ауоыиэяюёе]"
-    for letter in word_in_sentence:
-        result = re.findall(pattern, word_in_sentence.lower())
-        count += len(result)
-    return count
+    result = re.findall(pattern, text.lower())
+    return len(result)
 
 
 def sentence_count(letter):
+    #sentence tokenizer
     if letter in ['.', '!', '?']:
         return 1
     return 0
 
 
 def words_count(text):
+    #aranc punktuaciayi texty pahel
     tmp = text.split()
     count = len(tmp)
     if "-" in tmp:
@@ -26,64 +43,37 @@ def words_count(text):
 
 
 def readability_value(syllables, sentences, words):
-    if sentences:
+    #score
+    if sentences and words:
         return 208.75 - 1.08 * (syllables / sentences) - 65.14 * (syllables / words)
     return 0
 
 
-def readability(text):
-    sentences = 0
-    count_of_words = words_count(text)
-    count_of_syllables = 0
-    for letter in text:
-        count_of_syllables += syllable_count(letter)
-        sentences += sentence_count(letter)
-    if sentences == 0 or count_of_words == 0:
-        return 0
-    return readability_value(count_of_syllables, sentences, count_of_words)
-
-
 def readability_of_text(whole_text):
-    tmp = whole_text.split()
     sentences = 0
     words = words_count(whole_text)
-    syllables = 0
-    for word in tmp:
-        syllables += syllable_count(word)
-        for letter in word:
-            sentences += sentence_count(letter)
-    print(syllables)
+    syllables = syllable_count(whole_text)
+    #tokenizer
+    sentences = sentence_count(whole_text)
     print(readability_value(syllables, sentences, words))
 
 
-def readability_of_paragraph(text_, paragraph_number):
-    spl_text = text_.split("\n")
-    text_without_empty_paragraphs = [None] * len(spl_text)
-    j = 0
-    for i in spl_text:
-        if i == '':
-            continue
-        text_without_empty_paragraphs[j] = i
-        j += 1
-    if paragraph_number > j or paragraph_number < 1:
-        return 0
-    sentence = text_without_empty_paragraphs[paragraph_number - 1]
-    print(readability(sentence))
+def readability_of_paragraph(text):
+    spl_text = text.split("\n")
+    for paragraph in spl_text:
+        syllables = syllable_count(paragraph)
+        words = words_count(paragraph)
+        sentences = sentence_count(paragraph)
+        print(readability_value(syllables, sentences, words))
 
 
-def readability_of_chapter(text__, chapter_number):
-    splted_text = text__.split()
+def readability_of_chapter(text):
+    splted_text = text.split()
     chapter = set()
     size = len(splted_text)
     pattern = r"Глава\s*(.+)"
-    result = re.findall(pattern, text__)
+    result = re.search(pattern, text, 37)
     print(result)
-    a = False
-    for element in result:
-        if element == chapter_number:
-            a = True
-    if not a:
-        return 0
     for i in range(0, size):
         if splted_text[i] == 'ГЛАВА' or splted_text[i] == 'Глава':
             i += 1
@@ -102,11 +92,23 @@ def readability_of_chapter(text__, chapter_number):
 
 
 def main():
-    with open("text.txt", 'r', encoding='utf-8') as file:
-        tmp = file.read()
-        readability_of_text(tmp)
-        readability_of_paragraph(tmp, 2)
-        readability_of_chapter(tmp, 1)
+    try:
+        arg = sys.argv[1]
+    except IndexError:
+        print("Please, write path name!")
+        return
+
+    print("Enter the number of option you want to choose : Readability of 1 - text, 2 - paragraphs, 3 - chapters")
+    option = int(input())
+    if option not in [1, 2, 3]:
+        print("Enter correct value")
+        return
+    with open(arg, 'r', encoding='utf-8') as file:
+        text = file.read()
+        if option == 1:
+            readability_of_text(text)
+        elif option == 2:
+            readability_of_paragraph(text)
 
 
 if __name__ == "__main__":
