@@ -28,7 +28,6 @@ def readability_score(syllables, sentences, words):
 
 
 def readability_of_text(whole_text):
-    sentences = 0
     words = words_count(whole_text)
     syllables = syllable_count(whole_text)
     sentences = sentence_count(whole_text)
@@ -38,10 +37,7 @@ def readability_of_text(whole_text):
 def readability_of_paragraph(text):
     spl_text = text.split("\n")
     for paragraph in spl_text:
-        syllables = syllable_count(paragraph)
-        words = words_count(paragraph)
-        sentences = sentence_count(paragraph)
-        print(readability_score(syllables, sentences, words))
+        readability_of_text(paragraph)
 
 
 def readability_of_chapter(text):
